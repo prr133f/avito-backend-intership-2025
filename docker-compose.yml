@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    ports:
+      - "${APP_REST_PORT:-8000}:${APP_REST_PORT:-8000}"
+    volumes:
+      - .:/app
+    command: ./user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - service-network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    container_name: migrate
+    command: ["up"]
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - service-network
+
+  postgres:
+    image: postgres:latest
+    env_file: .env
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - service-network
+
+volumes:
+  postgres_data:
+
+networks:
+  service-network:
+    driver: bridge

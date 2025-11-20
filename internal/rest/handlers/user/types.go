@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/prr133f/avito-backend-intership-2025/internal/usecases/user"
+	"github.com/prr133f/avito-backend-intership-2025/internal/rest/usecases/user"
 )
 
 type handler struct {

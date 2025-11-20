@@ -2,9 +2,13 @@ package team
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/prr133f/avito-backend-intership-2025/internal/domain/team"
 	"github.com/prr133f/avito-backend-intership-2025/internal/domain/user"
+	pgerrs "github.com/prr133f/avito-backend-intership-2025/internal/repo/pg/errors"
 )
 
 func (s service) Create(ctx context.Context, team team.Team) error {
@@ -23,10 +27,12 @@ func (s service) Create(ctx context.Context, team team.Team) error {
 	INSERT INTO teams (name)
 	VALUES ($1)`, team.Name)
 	if err != nil {
-		s.log.Error("error creating team", "err", err)
-		if err := tx.Rollback(ctx); err != nil {
-			s.log.Error("error rolling back tx", "err", err)
+		if pgerr, ok := err.(*pgconn.PgError); ok {
+			if pgerr.Code == "23505" {
+				return pgerrs.ErrTeamAlreadyExists
+			}
 		}
+		s.log.Error("error creating team", "err", err)
 		return err
 	}
 
@@ -78,6 +84,9 @@ func (s service) Get(ctx context.Context, name string) (team.Team, error) {
 	FROM teams
 	WHERE name = $1`, name)
 	if err := row.Scan(&t.Name); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return team.Team{}, pgerrs.ErrNotFound
+		}
 		s.log.Error("error scanning team", "err", err)
 		return team.Team{}, err
 	}

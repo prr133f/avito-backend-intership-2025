@@ -6,16 +6,20 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/prr133f/avito-backend-intership-2025/internal/domain/pr"
 	"github.com/prr133f/avito-backend-intership-2025/internal/domain/user"
+	pgerrs "github.com/prr133f/avito-backend-intership-2025/internal/repo/pg/errors"
 )
 
 func (s service) SetActive(ctx context.Context, userID string, active bool) error {
-	_, err := s.pool.Exec(ctx, `
+	ct, err := s.pool.Exec(ctx, `
 	UPDATE users
 	SET is_active = $1
 	WHERE id = $2`, active, userID)
 	if err != nil {
 		s.log.Error("setting user active err", "err", err)
 		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return pgerrs.ErrNotFound
 	}
 	return nil
 }

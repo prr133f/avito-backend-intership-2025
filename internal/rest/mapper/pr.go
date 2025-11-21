@@ -8,12 +8,16 @@ import (
 )
 
 func PullRequestToDTO(pr pr.PullRequest) dto.PullRequest {
+	formatMergedAt := ""
+	if pr.MergedAt != nil {
+		formatMergedAt = pr.MergedAt.Format(time.RFC3339)
+	}
 	return dto.PullRequest{
 		ID:                pr.Id,
 		Name:              pr.Name,
 		Author:            pr.Author,
 		Status:            pr.Status,
-		MergedAt:          pr.MergedAt.Format(time.RFC3339),
+		MergedAt:          formatMergedAt,
 		AssignedReviewers: pr.AssignedReviewers,
 	}
 }

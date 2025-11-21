@@ -43,15 +43,16 @@ func (s service) Create(ctx context.Context, prModel pr.PullRequest) (pr.PullReq
 	with user_team as (
 		select team_name
 		from teams_users t
-		where user_id = 'u1'
+		where user_id = $1
 	)
 	select tu.user_id
 	from teams_users tu
 	join user_team ut on tu.team_name = ut.team_name
 	join users u on u.id = tu.user_id
 	where
-		tu.user_id != 'u1'
-		and u.is_active is true`, prModel.Author)
+		tu.user_id != $1
+		and u.is_active is true
+	limit 2`, prModel.Author)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			s.log.Info("no reviewers found")
@@ -132,5 +133,6 @@ func (s service) Merge(ctx context.Context, prId string) (pr.PullRequest, error)
 	return pgx.CollectOneRow(rows, pgx.RowToStructByNameLax[pr.PullRequest])
 }
 func (s service) Reassign(ctx context.Context, prId string, oldReviewerId string) (pr.PullRequest, string, error) {
+
 	return pr.PullRequest{}, "", nil
 }

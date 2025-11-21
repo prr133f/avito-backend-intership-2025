@@ -5,6 +5,6 @@ type PullRequest struct {
 	Name              string   `json:"pull_request_name"`
 	Author            string   `json:"author_id"`
 	Status            string   `json:"status"`
-	MergedAt          string   `json:"merged_at"`
-	AssignedReviewers []string `json:"assigned_reviewers"`
+	MergedAt          string   `json:"merged_at,omitempty"`
+	AssignedReviewers []string `json:"assigned_reviewers,omitempty"`
 }

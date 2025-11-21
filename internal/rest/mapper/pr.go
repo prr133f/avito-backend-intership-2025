@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"time"
+
 	"github.com/prr133f/avito-backend-intership-2025/internal/domain/pr"
 	"github.com/prr133f/avito-backend-intership-2025/internal/rest/dto"
 )
@@ -11,6 +13,7 @@ func PullRequestToDTO(pr pr.PullRequest) dto.PullRequest {
 		Name:              pr.Name,
 		Author:            pr.Author,
 		Status:            pr.Status,
+		MergedAt:          pr.MergedAt.Format(time.RFC3339),
 		AssignedReviewers: pr.AssignedReviewers,
 	}
 }

@@ -96,8 +96,40 @@ func (s service) Create(ctx context.Context, prModel pr.PullRequest) (pr.PullReq
 	}, nil
 }
 func (s service) Merge(ctx context.Context, prId string) (pr.PullRequest, error) {
+	ct, err := s.pool.Exec(ctx, `
+	UPDATE pull_requests
+	SET status='MERGED',
+		merged_at=CASE
+		WHEN status != 'MERGED' THEN NOW() AT TIME ZONE 'Europe/Moscow'
+		ELSE merged_at
+	ENDн
+	WHERE id=$1`, prId)
+	if err != nil {
+		s.log.Error("error while merging pr", "err", err)
+		return pr.PullRequest{}, err
+	}
+	if ct.RowsAffected() == 0 {
+		return pr.PullRequest{}, pgerrs.ErrNotFound
+	}
 
-	return pr.PullRequest{}, nil
+	rows, err := s.pool.Query(ctx, `
+	select
+		p.id,
+		p.name,
+		p.author,
+		p.status,
+		p.merged_at,
+		array_agg(pu.user_id order by pu.user_id) as assigned_reviewers
+	from pull_requests p
+	join pull_requests_users pu on p.id = pu.pull_request_id
+	where p.id=$1
+	group by p.id, p.name, p.author, p.status`, prId)
+	if err != nil {
+		s.log.Error("error while scanning author", "err", err)
+		return pr.PullRequest{}, err
+	}
+
+	return pgx.CollectOneRow(rows, pgx.RowToStructByNameLax[pr.PullRequest])
 }
 func (s service) Reassign(ctx context.Context, prId string, oldReviewerId string) (pr.PullRequest, string, error) {
 	return pr.PullRequest{}, "", nil

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+if ! command -v golangci-lint >/dev/null 2>&1; then
+    echo "golangci-lint is not installed. Please install it before committing."
+    exit 1
+fi
+
+golangci-lint run ./...
+ret=$?
+
+if [ $ret -ne 0 ]; then
+    echo "Linting failed. Please fix the issues before committing."
+    exit 1
+fi
+
+exit 0

@@ -7,7 +7,7 @@ def test_set_is_active(api_client):
 
 
 def test_set_is_active_with_invalid_user_id(api_client):
-    body = {"user_id": "invalid_user_id", "is_active": False}
+    body = {"user_id": "uu13", "is_active": False}
     response = api_client("POST", "/users/setIsActive", json=body)
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "NOT_FOUND"

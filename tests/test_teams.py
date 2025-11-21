@@ -1,12 +1,9 @@
-import uuid
-
-
 def test_add_team(api_client):
     body = {
         "team_name": "Test Team",
         "members": [
-            {"user_id": uuid.uuid4(), "username": "Alice", "is_active": True},
-            {"user_id": uuid.uuid4(), "username": "Bob", "is_active": True},
+            {"user_id": "u1", "username": "Alice", "is_active": True},
+            {"user_id": "u2", "username": "Bob", "is_active": True},
         ],
     }
     response = api_client("POST", "/team/add", json=body)
@@ -18,8 +15,8 @@ def test_add_existed_team(api_client):
     body = {
         "team_name": "Test Team",
         "members": [
-            {"user_id": uuid.uuid4(), "username": "Alice", "is_active": True},
-            {"user_id": uuid.uuid4(), "username": "Bob", "is_active": True},
+            {"user_id": "u1", "username": "Alice", "is_active": True},
+            {"user_id": "u2", "username": "Bob", "is_active": True},
         ],
     }
     response = api_client("POST", "/team/add", json=body)

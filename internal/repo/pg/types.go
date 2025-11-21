@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prr133f/avito-backend-intership-2025/internal/repo/pg/pr"
 	"github.com/prr133f/avito-backend-intership-2025/internal/repo/pg/team"
 	"github.com/prr133f/avito-backend-intership-2025/internal/repo/pg/user"
 )
@@ -13,6 +14,7 @@ import (
 type Service struct {
 	UserRepo user.Repo
 	TeamRepo team.Repo
+	PRRepo   pr.Repo
 }
 
 func New(DSN string, logger *slog.Logger) *Service {
@@ -28,6 +30,7 @@ func New(DSN string, logger *slog.Logger) *Service {
 		pgInst = &Service{
 			UserRepo: user.NewService(logger, pool),
 			TeamRepo: team.NewService(logger, pool),
+			PRRepo:   pr.NewService(logger, pool),
 		}
 	})
 

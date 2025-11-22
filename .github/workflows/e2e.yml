@@ -48,8 +48,6 @@ jobs:
           pip install pytest requests
 
       - name: Run pytest
-        env:
-          BASE_URL: http://localhost:${APP_REST_PORT:-8000}
         run: |
           pytest -q
 

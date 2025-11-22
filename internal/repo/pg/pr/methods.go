@@ -103,7 +103,7 @@ func (s service) Merge(ctx context.Context, prId string) (pr.PullRequest, error)
 		merged_at=CASE
 		WHEN status != 'MERGED' THEN NOW() AT TIME ZONE 'Europe/Moscow'
 		ELSE merged_at
-	ENDн
+	END
 	WHERE id=$1`, prId)
 	if err != nil {
 		s.log.Error("error while merging pr", "err", err)
@@ -113,6 +113,96 @@ func (s service) Merge(ctx context.Context, prId string) (pr.PullRequest, error)
 		return pr.PullRequest{}, pgerrs.ErrNotFound
 	}
 
+	return s.getPullRequest(ctx, prId)
+}
+func (s service) Reassign(ctx context.Context, prId string, oldReviewerId string) (pr.PullRequest, string, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		s.log.Error("error while starting tx for reassign", "err", err)
+		return pr.PullRequest{}, "", err
+	}
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			s.log.Error("error while rolling back tx in reassign", "err", err)
+		}
+	}()
+
+	var status string
+	if err := tx.QueryRow(ctx, `SELECT status FROM pull_requests WHERE id = $1`, prId).Scan(&status); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return pr.PullRequest{}, "", pgerrs.ErrNotFound
+		}
+		s.log.Error("error while selecting pr status", "err", err)
+		return pr.PullRequest{}, "", err
+	}
+	if status == "MERGED" {
+		return pr.PullRequest{}, "", pgerrs.ErrPrMerged
+	}
+
+	var tmp int
+	if err := tx.QueryRow(ctx, `SELECT 1 FROM users WHERE id = $1`, oldReviewerId).Scan(&tmp); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return pr.PullRequest{}, "", pgerrs.ErrNotFound
+		}
+		s.log.Error("error while checking old reviewer existence", "err", err)
+		return pr.PullRequest{}, "", err
+	}
+
+	if err := tx.QueryRow(ctx, `SELECT 1 FROM pull_requests_users WHERE pull_request_id = $1 AND user_id = $2`, prId, oldReviewerId).Scan(&tmp); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return pr.PullRequest{}, "", pgerrs.ErrNotAssigned
+		}
+		s.log.Error("error while checking old reviewer assigned", "err", err)
+		return pr.PullRequest{}, "", err
+	}
+
+	var candidate string
+	err = tx.QueryRow(ctx, `
+	WITH old_reviewer_team AS (
+	    SELECT team_name
+	    FROM teams_users tu
+	    WHERE tu.user_id = $1
+	    LIMIT 1
+	)
+	SELECT u.id
+	FROM users u
+	JOIN teams_users tu ON u.id = tu.user_id
+	JOIN old_reviewer_team ort ON tu.team_name = ort.team_name
+	LEFT JOIN pull_requests_users pru ON pru.user_id = u.id AND pru.pull_request_id = $2
+	WHERE u.is_active = TRUE
+	  AND u.id != $1
+	  AND pru.user_id IS NULL
+	LIMIT 1`, oldReviewerId, prId).Scan(&candidate)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return pr.PullRequest{}, "", pgerrs.ErrNoCandidate
+		}
+		s.log.Error("error while selecting candidate", "err", err)
+		return pr.PullRequest{}, "", err
+	}
+
+	ct, err := tx.Exec(ctx, `UPDATE pull_requests_users SET user_id = $1 WHERE pull_request_id = $2 AND user_id = $3`, candidate, prId, oldReviewerId)
+	if err != nil {
+		s.log.Error("error while updating pull_requests_users", "err", err)
+		return pr.PullRequest{}, "", err
+	}
+	if ct.RowsAffected() == 0 {
+		return pr.PullRequest{}, "", pgerrs.ErrNotAssigned
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		s.log.Error("error while committing reassign tx", "err", err)
+		return pr.PullRequest{}, "", err
+	}
+
+	pull, err := s.getPullRequest(ctx, prId)
+	if err != nil {
+		return pr.PullRequest{}, "", err
+	}
+	return pull, candidate, nil
+}
+
+func (s service) getPullRequest(ctx context.Context, id string) (pr.PullRequest, error) {
 	rows, err := s.pool.Query(ctx, `
 	select
 		p.id,
@@ -124,15 +214,11 @@ func (s service) Merge(ctx context.Context, prId string) (pr.PullRequest, error)
 	from pull_requests p
 	join pull_requests_users pu on p.id = pu.pull_request_id
 	where p.id=$1
-	group by p.id, p.name, p.author, p.status`, prId)
+	group by p.id, p.name, p.author, p.status`, id)
 	if err != nil {
 		s.log.Error("error while scanning author", "err", err)
 		return pr.PullRequest{}, err
 	}
 
 	return pgx.CollectOneRow(rows, pgx.RowToStructByNameLax[pr.PullRequest])
-}
-func (s service) Reassign(ctx context.Context, prId string, oldReviewerId string) (pr.PullRequest, string, error) {
-
-	return pr.PullRequest{}, "", nil
 }

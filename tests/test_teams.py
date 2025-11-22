@@ -4,6 +4,8 @@ def test_add_team(api_client):
         "members": [
             {"user_id": "u1", "username": "Alice", "is_active": True},
             {"user_id": "u2", "username": "Bob", "is_active": True},
+            {"user_id": "u3", "username": "Charlie", "is_active": True},
+            {"user_id": "u4", "username": "David", "is_active": True},
         ],
     }
     response = api_client("POST", "/team/add", json=body)

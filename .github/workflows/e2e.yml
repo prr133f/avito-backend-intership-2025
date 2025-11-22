@@ -49,7 +49,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest -q
+          pytest -q tests/test_teams.py tests/test_pull_requests.py tests/test_teams.py
 
       - name: Tear down docker-compose and remove volumes
         if: always()

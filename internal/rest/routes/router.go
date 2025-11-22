@@ -22,5 +22,7 @@ func InitRouter(log *slog.Logger) *chi.Mux {
 
 	r.Mount("/user", v1.InitUserRoutes(log))
 
+	r.Mount("/pullRequest", v1.InitPRRoutes(log))
+
 	return r
 }

@@ -48,4 +48,27 @@ func (h handler) SetActive(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h handler) GetReview(w http.ResponseWriter, r *http.Request) {}
+func (h handler) GetReview(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("user_id")
+
+	prs, err := h.usecase.GetReview(r.Context(), userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error("error while getting review", "err", err)
+		return
+	}
+
+	mappedPrs := make([]dto.PullRequest, len(prs))
+	for i, pr := range prs {
+		mappedPrs[i] = mapper.PullRequestToDTO(pr)
+	}
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"user_id":       userId,
+		"pull_requests": mappedPrs,
+	}); err != nil {
+		h.log.Error("error while encoding response", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}

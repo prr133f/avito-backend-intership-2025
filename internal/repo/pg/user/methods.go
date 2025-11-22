@@ -26,7 +26,7 @@ func (s service) SetActive(ctx context.Context, userID string, active bool) erro
 
 func (s service) GetReview(ctx context.Context, userID string) ([]pr.PullRequest, error) {
 	rows, err := s.pool.Query(ctx, `
-	SELECT p.id, p.name, p.author, p.status
+	SELECT p.id, p.name, p.author, p.status, p.merged_at
 	FROM pull_requests p
 	JOIN pull_requests_users pu ON p.id = pu.pull_request_id
 	WHERE pu.user_id = $1`, userID)

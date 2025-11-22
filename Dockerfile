@@ -12,5 +12,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server ./cmd/app
 
 FROM alpine:latest
-COPY --from=builder /app/avito-backend-intership-2025 /usr/local/bin/avito-backend-intership-2025
+
+COPY --from=builder /app/server /usr/local/bin/server
+
 ENTRYPOINT ["server"]

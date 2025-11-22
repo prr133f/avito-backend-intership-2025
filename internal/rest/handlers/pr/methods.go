@@ -84,7 +84,7 @@ func (h handler) Merge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(mapper.PullRequestToDTO(pr)); err != nil {
+	if err := json.NewEncoder(w).Encode(map[string]any{"pr": mapper.PullRequestToDTO(pr)}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

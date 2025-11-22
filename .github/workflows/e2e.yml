@@ -1,0 +1,57 @@
+name: e2e
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  e2e:
+    name: e2e tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start docker-compose (build & up)
+        run: |
+          COMPOSE_BAKE=true docker compose -f docker-compose.e2e.yml up -d --build
+
+      - name: Wait for service to be healthy
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:${APP_REST_PORT:-8000}/health; then
+              echo "service is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "service did not become ready in time"
+          echo "=== docker compose logs ==="
+          docker compose -f docker-compose.e2e.yml logs --no-color
+          exit 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install pytest and deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests
+
+      - name: Run pytest
+        run: |
+          pytest -q tests/test_teams.py tests/test_pull_requests.py tests/test_teams.py
+
+      - name: Tear down docker-compose and remove volumes
+        if: always()
+        run: |
+          docker compose -f docker-compose.e2e.yml down -v

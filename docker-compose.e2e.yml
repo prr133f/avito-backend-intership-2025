@@ -45,7 +45,7 @@ services:
     env_file: .env
 
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data_tests:/var/lib/postgresql
 
     command: |
       postgres
@@ -63,7 +63,7 @@ services:
       - service-network
 
 volumes:
-  postgres_data:
+  postgres_data_tests:
 
 networks:
   service-network:

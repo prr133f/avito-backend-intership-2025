@@ -29,9 +29,11 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := h.usecase.Add(r.Context(), domainTeam); err != nil {
 		if errors.Is(err, pgerrs.ErrTeamAlreadyExists) {
 			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(dto.Error{
-				Code:    handlers.CODE_TEAM_ALREADY_EXISTS,
-				Message: err.Error(),
+			if err := json.NewEncoder(w).Encode(map[string]any{
+				"error": dto.Error{
+					Code:    handlers.CODE_TEAM_ALREADY_EXISTS,
+					Message: err.Error(),
+				},
 			}); err != nil {
 				h.log.Error("error while encoding error response", "err", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -53,9 +55,11 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, pgerrs.ErrNotFound) {
 			w.WriteHeader(http.StatusNotFound)
-			if err := json.NewEncoder(w).Encode(dto.Error{
-				Code:    handlers.CODE_NOT_FOUND,
-				Message: err.Error(),
+			if err := json.NewEncoder(w).Encode(map[string]any{
+				"error": dto.Error{
+					Code:    handlers.CODE_NOT_FOUND,
+					Message: err.Error(),
+				},
 			}); err != nil {
 				h.log.Error("error while encoding error response", "err", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)

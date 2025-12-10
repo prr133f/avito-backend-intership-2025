@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file: .env
+    env_file: .e2e.env
     ports:
       - "${APP_REST_PORT:-8000}:${APP_REST_PORT:-8000}"
     volumes:
@@ -33,7 +33,7 @@ services:
     container_name: migrate
     command: ["up"]
     env_file:
-      - .env
+      - .e2e.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,7 +42,7 @@ services:
 
   postgres:
     image: postgres:latest
-    env_file: .env
+    env_file: .e2e.env
 
     volumes:
       - postgres_data_tests:/var/lib/postgresql

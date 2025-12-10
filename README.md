@@ -6,7 +6,8 @@
 
 [![e2e tests](https://github.com/prr133f/avito-backend-intership-2025/actions/workflows/e2e.yml/badge.svg)](https://github.com/prr133f/avito-backend-intership-2025/actions/workflows/e2e.yml) 
 [![lint tests](https://github.com/prr133f/avito-backend-intership-2025/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/prr133f/avito-backend-intership-2025/actions/workflows/golangci-lint.yml)
-
+[![docker pulls](https://img.shields.io/docker/pulls/prr133f/avito.svg)](https://hub.docker.com/r/prr133f/avito)
+[![docker hub tag](https://img.shields.io/docker/v/prr133f/avito?label=docker%20hub%20tag)](https://hub.docker.com/r/prr133f/avito/tags)
 ### Стек
 - Язык: Golang:v1.24
 - База данных: PostgreSQL

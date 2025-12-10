@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/prr133f/avito-backend-intership-2025/internal/logging"
+	"github.com/prr133f/avito-backend-intership-2025/internal/metrics"
 	"github.com/prr133f/avito-backend-intership-2025/internal/rest/routes"
 )
 
 func main() {
 	log := logging.NewLogger()
 	router := routes.InitRouter(log)
+	metrics.InitMetrics()
 
 	srv := &http.Server{
 		Addr:    ":" + os.Getenv("APP_PORT"),

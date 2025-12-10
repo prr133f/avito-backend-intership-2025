@@ -6,6 +6,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/prr133f/avito-backend-intership-2025/internal/rest/middlewares"
 	v1 "github.com/prr133f/avito-backend-intership-2025/internal/rest/routes/v1"
 )
 
@@ -13,6 +16,7 @@ func InitRouter(log *slog.Logger) *chi.Mux {
 	r := chi.NewMux()
 
 	r.Use(middleware.Logger)
+	r.Use(middlewares.CountRequests)
 
 	r.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -24,5 +28,6 @@ func InitRouter(log *slog.Logger) *chi.Mux {
 
 	r.Mount("/pullRequest", v1.InitPRRoutes(log))
 
+	r.Handle("/metrics", promhttp.Handler())
 	return r
 }

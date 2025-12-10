@@ -4,10 +4,6 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
   push_to_registry:
     name: Push Docker Image to DockerHub
@@ -37,10 +33,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.output.labels }}
-
-      - name: Generate artifacts
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-name: index.docker.io/prr133f/avito
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true

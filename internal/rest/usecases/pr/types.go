@@ -3,7 +3,6 @@ package pr
 import (
 	"context"
 	"log/slog"
-	"os"
 
 	"github.com/prr133f/avito-backend-intership-2025/internal/domain/pr"
 	"github.com/prr133f/avito-backend-intership-2025/internal/repo/pg"
@@ -17,7 +16,7 @@ type usecase struct {
 func NewUsecase(log *slog.Logger) Usecase {
 	return &usecase{
 		log: log,
-		pg:  pg.New(os.Getenv("POSTGRES_DSN"), log),
+		pg:  pg.New(log),
 	}
 }
 
